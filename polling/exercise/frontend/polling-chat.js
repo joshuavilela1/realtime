@@ -17,6 +17,23 @@ chat.addEventListener('submit', function (e) {
 async function postNewMsg(user, text) {
   // post to /poll a new message
   // write code here
+  const data = {
+    user,
+    text,
+  };
+
+  //request options
+  const options = {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+
+  // send POST request
+  const res = await fetch('/poll', options);
+  const json = await res.json();
 }
 
 async function getNewMsgs() {
