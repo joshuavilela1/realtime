@@ -50,7 +50,17 @@ async function getNewMsgs() {
 
   allChat = json.msg;
   render();
-  setTimeout(getNewMsgs, INTERVAL);
+
+  let timeToMakeNextRequest = 0;
+  async function rafTimer(time) {
+    if (timeToMakeNextRequest <= time) {
+      await getNewMsgs();
+      timeToMakeNextRequest = time + INTERVAL;
+    }
+    requestAnimationFrame(rafTimer);
+  }
+
+  requestAnimationFrame(rafTimer);
 }
 
 function render() {
