@@ -6,6 +6,7 @@ let allChat = [];
 
 // the interval to poll at in milliseconds
 const INTERVAL = 3000;
+const BACKOFF = 5000;
 
 // a submit listener on the form in the HTML
 chat.addEventListener('submit', function (e) {
@@ -32,34 +33,52 @@ async function postNewMsg(user, text) {
   };
 
   // send POST request
-  const res = await fetch('/poll', options);
-  const json = await res.json();
+  await fetch('/poll', options);
 }
 
+// * Example of long polling / requestanimationframe(waiting for idle thread to run)
+// async function getNewMsgs() {
+//   poll the server
+//   let json;
+//   try {
+//     const res = await fetch('/poll');
+//     json = await res.json();
+//   } catch (e) {
+//   back off code would go here
+//     console.error('polling error', e);
+//   }
+
+//   allChat = json.msg;
+//   render();
+
+//   let timeToMakeNextRequest = 0;
+//   async function rafTimer(time) {
+//     if (timeToMakeNextRequest <= time) {
+//       await getNewMsgs();
+//       timeToMakeNextRequest = time + INTERVAL;
+//     }
+//     requestAnimationFrame(rafTimer);
+//   }
+
+//   requestAnimationFrame(rafTimer);
+// }
+
 async function getNewMsgs() {
-  // poll the server
-  let json;
   try {
     const res = await fetch('/poll');
-    json = await res.json();
-  } catch (e) {
-    //back off code would go here
-    console.error('polling error', e);
-  }
+    const json = await res.json();
 
-  allChat = json.msg;
-  render();
-
-  let timeToMakeNextRequest = 0;
-  async function rafTimer(time) {
-    if (timeToMakeNextRequest <= time) {
-      await getNewMsgs();
-      timeToMakeNextRequest = time + INTERVAL;
+    if (res.status >= 400) {
+      throw new Error('request did not succeed: ' + res.status);
     }
-    requestAnimationFrame(rafTimer);
-  }
 
-  requestAnimationFrame(rafTimer);
+    allChat = json.msg;
+    render();
+    failedTries = 0;
+  } catch (e) {
+    //back off
+    failedTries++;
+  }
 }
 
 function render() {
